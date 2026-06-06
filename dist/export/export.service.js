@@ -18,6 +18,7 @@ const marked_1 = require("marked");
 const puppeteer_1 = __importDefault(require("puppeteer"));
 const epub_gen_memory_1 = __importDefault(require("epub-gen-memory"));
 const books_service_1 = require("../books/books.service");
+const prisma_service_1 = require("../prisma/prisma.service");
 const COVER_THEMES = {
     Moderne: ['#5b21b6', '#6d28d9', true],
     Luxe: ['#2a2440', '#0f0d1a', true],
@@ -31,8 +32,10 @@ const COVER_THEMES = {
 const DEFAULT_THEME = ['#15130f', '#3f3a30', true];
 let ExportService = class ExportService {
     books;
-    constructor(books) {
+    prisma;
+    constructor(books, prisma) {
         this.books = books;
+        this.prisma = prisma;
     }
     async load(userId, bookId) {
         const book = await this.books.findOne(userId, bookId);
@@ -43,11 +46,16 @@ let ExportService = class ExportService {
         if (!chapters.length) {
             throw new common_1.BadRequestException('Aucun chapitre genere. Lancez la generation avant d export.');
         }
+        const owner = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { name: true },
+        });
         return {
             title: book.title,
             topic: book.topic,
             style: book.style,
             language: book.language,
+            author: owner?.name || undefined,
             coverUrl: book.coverUrl,
             chapters,
         };
@@ -68,8 +76,9 @@ let ExportService = class ExportService {
         };
         const [c1, c2, lightText] = COVER_THEMES[book.style] ?? DEFAULT_THEME;
         const coverText = lightText ? '#ffffff' : '#15130f';
-        const coverMuted = lightText ? 'rgba(255,255,255,0.8)' : 'rgba(21,19,15,0.7)';
+        const coverMuted = lightText ? 'rgba(255,255,255,0.82)' : 'rgba(21,19,15,0.7)';
         const coverLine = lightText ? 'rgba(255,255,255,0.4)' : 'rgba(21,19,15,0.25)';
+        const coverDeco = lightText ? 'rgba(255,255,255,0.14)' : 'rgba(21,19,15,0.10)';
         const toc = book.chapters
             .map((c) => `<li><span class="toc-num">${c.order}.</span> ${this.escape(c.title)}</li>`)
             .join('\n');
@@ -91,33 +100,56 @@ let ExportService = class ExportService {
 <head>
 <meta charset="utf-8" />
 <style>
-  @page { margin: 25mm 20mm; }
+  @page { margin: 22mm 18mm; }
+  /* Couverture: page dediee sans marge -> fond edge-to-edge. */
+  @page cover { margin: 0; }
   * { box-sizing: border-box; }
   body {
     font-family: Georgia, 'Times New Roman', serif;
     font-size: 12pt; line-height: 1.7; color: #1a1a1a; margin: 0;
   }
+  /* ---- Couverture pleine page A4 (210x297mm, edge-to-edge) ---- */
   .cover {
-    height: 247mm; border-radius: 8mm; overflow: hidden;
+    page: cover;
+    position: relative; width: 210mm; height: 297mm; overflow: hidden;
     background: linear-gradient(150deg, ${c1} 0%, ${c2} 100%);
-    color: ${coverText};
-    display: flex; flex-direction: column; justify-content: space-between;
-    padding: 22mm 18mm; page-break-after: always;
+    color: ${coverText}; page-break-after: always;
   }
-  .cover-tag {
-    align-self: flex-start; font-size: 9pt; letter-spacing: 3px;
-    text-transform: uppercase; font-weight: bold; padding: 4px 12px;
-    border: 1px solid ${coverLine}; border-radius: 999px;
-    font-family: Georgia, serif;
+  /* Decor: rayures diagonales discretes (haut) */
+  .cover-stripes {
+    position: absolute; top: 0; left: 0; right: 0; height: 82mm; z-index: 1;
+    background: repeating-linear-gradient(-45deg, ${coverDeco} 0 2px, transparent 2px 15px);
   }
-  .cover-main { margin-top: auto; }
-  .cover-rule { width: 56px; height: 3px; background: ${coverText}; margin-bottom: 10mm; opacity: 0.9; }
-  .cover h1 { font-size: 40pt; margin: 0; line-height: 1.12; font-weight: bold; }
-  .cover .topic {
-    margin: 8mm 0 0; font-size: 13pt; line-height: 1.5;
-    color: ${coverMuted}; max-width: 80%;
+  /* Decor: anneaux concentriques (bas-droite) */
+  .cover-ring { position: absolute; border-radius: 50%; border: 1.5px solid ${coverDeco}; z-index: 1; }
+  .cover-ring.r1 { width: 150mm; height: 150mm; right: -52mm; bottom: -52mm; }
+  .cover-ring.r2 { width: 104mm; height: 104mm; right: -28mm; bottom: -28mm; }
+  .cover-ring.r3 { width: 60mm;  height: 60mm;  right: -6mm;  bottom: -6mm; }
+  /* Contenu */
+  .cover-inner {
+    position: relative; z-index: 2; height: 100%;
+    display: flex; flex-direction: column; padding: 30mm 26mm;
   }
-  .cover-foot { font-size: 9pt; letter-spacing: 1px; color: ${coverMuted}; text-transform: uppercase; }
+  .cover-pub-top {
+    font-size: 10pt; letter-spacing: 4px; text-transform: uppercase;
+    font-weight: bold; color: ${coverMuted};
+  }
+  .cover-center { margin: auto 0; }
+  .cover-rule { width: 64px; height: 4px; background: ${coverText}; margin-bottom: 12mm; opacity: 0.95; }
+  .cover-title {
+    font-size: 50pt; margin: 0; line-height: 1.08; font-weight: bold; letter-spacing: -0.5px;
+  }
+  .cover-subtitle {
+    margin: 10mm 0 0; font-size: 15pt; line-height: 1.5;
+    color: ${coverMuted}; max-width: 85%; font-style: italic;
+  }
+  .cover-foot { margin-top: auto; border-top: 1px solid ${coverLine}; padding-top: 6mm; }
+  .cover-author { font-size: 14pt; font-weight: bold; }
+  .cover-author .by {
+    display: block; margin-bottom: 2mm; font-size: 9.5pt; font-weight: normal;
+    letter-spacing: 1.5px; text-transform: uppercase; color: ${coverMuted};
+  }
+  .cover-pub { margin-top: 4mm; font-size: 9pt; letter-spacing: 2px; color: ${coverMuted}; text-transform: uppercase; }
   .toc { page-break-after: always; }
   .toc h2 { font-size: 20pt; border-bottom: 2px solid #222; padding-bottom: 8px; }
   .toc ul { list-style: none; padding: 0; }
@@ -146,13 +178,22 @@ let ExportService = class ExportService {
 </head>
 <body>
   <div class="cover">
-    <span class="cover-tag">${this.escape(book.style || 'Guide')}</span>
-    <div class="cover-main">
-      <div class="cover-rule"></div>
-      <h1>${this.escape(book.title)}</h1>
-      <div class="topic">${this.escape(book.topic)}</div>
+    <div class="cover-stripes"></div>
+    <div class="cover-ring r1"></div>
+    <div class="cover-ring r2"></div>
+    <div class="cover-ring r3"></div>
+    <div class="cover-inner">
+      <div class="cover-pub-top">EbookGen</div>
+      <div class="cover-center">
+        <div class="cover-rule"></div>
+        <h1 class="cover-title">${this.escape(book.title)}</h1>
+        <div class="cover-subtitle">${this.escape(book.topic)}</div>
+      </div>
+      <div class="cover-foot">
+        <div class="cover-author"><span class="by">Écrit par</span>${this.escape(book.author ?? 'Auteur inconnu')}</div>
+        <div class="cover-pub">Édité avec EbookGen</div>
+      </div>
     </div>
-    <div class="cover-foot">${this.escape(book.author ?? 'EbookGen')}</div>
   </div>
   <div class="toc">
     <h2>${L.toc}</h2>
@@ -217,6 +258,7 @@ let ExportService = class ExportService {
 exports.ExportService = ExportService;
 exports.ExportService = ExportService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [books_service_1.BooksService])
+    __metadata("design:paramtypes", [books_service_1.BooksService,
+        prisma_service_1.PrismaService])
 ], ExportService);
 //# sourceMappingURL=export.service.js.map

@@ -1,7 +1,9 @@
 import { BooksService } from '../books/books.service';
+import { PrismaService } from '../prisma/prisma.service';
 export declare class ExportService {
     private books;
-    constructor(books: BooksService);
+    private prisma;
+    constructor(books: BooksService, prisma: PrismaService);
     private load;
     private slug;
     private renderHtml;
