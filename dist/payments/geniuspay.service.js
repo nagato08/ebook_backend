@@ -43,12 +43,6 @@ let GeniusPayService = GeniusPayService_1 = class GeniusPayService {
             return { reference, status: 'PENDING', checkoutUrl: undefined };
         }
         try {
-            this.logger.debug(`Calling GeniusPay ${this.baseUrl}/merchant/payments`, {
-                amount: req.amount,
-                currency: req.currency,
-                phone: req.phoneNumber,
-                ref: req.externalReference,
-            });
             const { data } = await axios_1.default.post(`${this.baseUrl}/merchant/payments`, {
                 amount: Number(req.amount),
                 currency: req.currency === 'XAF' ? 'XOF' : req.currency,

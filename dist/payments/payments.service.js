@@ -118,12 +118,6 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
         const a = Buffer.from(signature);
         const b = Buffer.from(expected);
         if (a.length !== b.length || !(0, crypto_1.timingSafeEqual)(a, b)) {
-            this.logger.error('Webhook sig MISMATCH', {
-                received: signature,
-                expected,
-                timestamp,
-                rawBody,
-            });
             throw new common_1.UnauthorizedException('Signature webhook invalide');
         }
     }

@@ -52,13 +52,6 @@ export class GeniusPayService implements PaymentProvider {
     }
 
     try {
-      this.logger.debug(`Calling GeniusPay ${this.baseUrl}/merchant/payments`, {
-        amount: req.amount,
-        currency: req.currency,
-        phone: req.phoneNumber,
-        ref: req.externalReference,
-      });
-
       const { data } = await axios.post<{
         data: { reference: string; checkout_url?: string; gateway?: string };
       }>(
