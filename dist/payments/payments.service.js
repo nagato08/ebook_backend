@@ -47,8 +47,8 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
         const pack = (0, credit_packs_1.findPack)(dto.packId);
         if (!pack)
             throw new common_1.BadRequestException('Pack inconnu');
-        const phoneNumber = dto.phoneNumber.replace(/[^0-9]/g, '');
-        if (phoneNumber.length < 8) {
+        const phoneNumber = (dto.phoneNumber ?? '').replace(/[^0-9]/g, '');
+        if (phoneNumber && phoneNumber.length < 8) {
             throw new common_1.BadRequestException('Numero de telephone invalide');
         }
         const depositId = (0, crypto_1.randomUUID)();

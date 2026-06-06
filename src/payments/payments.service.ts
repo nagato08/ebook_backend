@@ -48,9 +48,10 @@ export class PaymentsService {
     const pack = findPack(dto.packId);
     if (!pack) throw new BadRequestException('Pack inconnu');
 
-    // MSISDN: chiffres uniquement (237XXXXXXXXX).
-    const phoneNumber = dto.phoneNumber.replace(/[^0-9]/g, '');
-    if (phoneNumber.length < 8) {
+    // Optionnel (GeniusPay checkout demande le numero sur sa page).
+    // Si fourni, on nettoie (chiffres only) et valide; sinon chaine vide.
+    const phoneNumber = (dto.phoneNumber ?? '').replace(/[^0-9]/g, '');
+    if (phoneNumber && phoneNumber.length < 8) {
       throw new BadRequestException('Numero de telephone invalide');
     }
 

@@ -1,5 +1,5 @@
 export declare class InitiateDepositDto {
     packId: string;
-    phoneNumber: string;
+    phoneNumber?: string;
     currency?: string;
 }

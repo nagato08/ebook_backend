@@ -4,8 +4,11 @@ export class InitiateDepositDto {
   @IsString()
   packId: string; // discovery | creator | pro | business
 
+  // Optionnel: GeniusPay (checkout hebergé) demande le numero sur sa page.
+  // Si fourni, sert de pre-remplissage. Format 237XXXXXXXXX.
+  @IsOptional()
   @IsString()
-  phoneNumber: string; // format 237XXXXXXXXX (CamPay detecte l'operateur)
+  phoneNumber?: string;
 
   @IsOptional()
   @IsString()
