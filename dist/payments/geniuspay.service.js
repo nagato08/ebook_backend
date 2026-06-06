@@ -42,27 +42,43 @@ let GeniusPayService = GeniusPayService_1 = class GeniusPayService {
             this.logger.warn(`[MOCK] collect ${req.externalReference} -> ${reference}`);
             return { reference, status: 'PENDING', checkoutUrl: undefined };
         }
-        const { data } = await axios_1.default.post(`${this.baseUrl}/merchant/payments`, {
-            amount: Number(req.amount),
-            currency: req.currency === 'XAF' ? 'XOF' : req.currency,
-            description: (req.description ?? 'Ebook credits').slice(0, 500),
-            customer: {
+        try {
+            this.logger.debug(`Calling GeniusPay ${this.baseUrl}/merchant/payments`, {
+                amount: req.amount,
+                currency: req.currency,
                 phone: req.phoneNumber,
-                name: req.customerName,
-                email: req.customerEmail,
-            },
-            success_url: process.env.GENIUSPAY_SUCCESS_URL,
-            error_url: process.env.GENIUSPAY_ERROR_URL,
-            metadata: { externalReference: req.externalReference },
-        }, { headers: this.headers, timeout: 30000 });
-        const d = data.data;
-        this.logger.log(`collect ${req.externalReference} -> ref ${d.reference}`);
-        return {
-            reference: d.reference,
-            status: 'PENDING',
-            operator: d.gateway,
-            checkoutUrl: d.checkout_url,
-        };
+                ref: req.externalReference,
+            });
+            const { data } = await axios_1.default.post(`${this.baseUrl}/merchant/payments`, {
+                amount: Number(req.amount),
+                currency: req.currency === 'XAF' ? 'XOF' : req.currency,
+                description: (req.description ?? 'Ebook credits').slice(0, 500),
+                customer: {
+                    phone: req.phoneNumber,
+                    name: req.customerName,
+                    email: req.customerEmail,
+                },
+                success_url: process.env.GENIUSPAY_SUCCESS_URL,
+                error_url: process.env.GENIUSPAY_ERROR_URL,
+                metadata: { externalReference: req.externalReference },
+            }, { headers: this.headers, timeout: 30000 });
+            const d = data.data;
+            this.logger.log(`collect ${req.externalReference} -> ref ${d.reference}`);
+            return {
+                reference: d.reference,
+                status: 'PENDING',
+                operator: d.gateway,
+                checkoutUrl: d.checkout_url,
+            };
+        }
+        catch (e) {
+            this.logger.error('GeniusPay collect failed', {
+                status: e.response?.status,
+                data: e.response?.data,
+                message: e.message,
+            });
+            throw e;
+        }
     }
     async status(reference) {
         if (this.isMock || reference.startsWith('MOCK-')) {
