@@ -1,0 +1,29 @@
+# Override PRODUCTION (VPS derriere Nginx Proxy Manager).
+# Usage sur le VPS :
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# Prerequis : le backend + NPM doivent etre sur le MEME reseau Docker.
+# Definis PROXY_NETWORK = le nom de TON reseau existant (ou n8n/NPM sont) :
+#   export PROXY_NETWORK=le_nom_de_ton_reseau
+# Verifie tes reseaux : docker network ls
+# (Le conteneur NPM doit etre connecte a ce reseau.)
+
+services:
+  backend:
+    container_name: ebook-backend
+    # backend rejoint le reseau de NPM (proxy) ET le reseau interne (pour la db)
+    networks:
+      - default
+      - proxy
+    # Pas besoin d'exposer le port sur l'hote : NPM joint le conteneur via "proxy".
+    ports: !reset []
+
+  db:
+    # Reste uniquement sur le reseau interne (jamais expose).
+    networks:
+      - default
+
+networks:
+  proxy:
+    external: true
+    name: ${PROXY_NETWORK:-proxy}
