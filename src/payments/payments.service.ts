@@ -133,6 +133,13 @@ export class PaymentsService {
       .update(`${timestamp}.${rawBody}`)
       .digest('hex');
 
+    this.logger.debug('Webhook sig check', {
+      received: signature,
+      expected,
+      timestamp,
+      bodyLen: rawBody?.length,
+    });
+
     const a = Buffer.from(signature);
     const b = Buffer.from(expected);
     if (a.length !== b.length || !timingSafeEqual(a, b)) {
