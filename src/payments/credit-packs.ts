@@ -11,7 +11,7 @@ export interface CreditPack {
 // 1 ebook = 20 credits. Prix/credit degressif: 75 -> 70 -> 64 -> 58 FCFA.
 export const CREDIT_PACKS: CreditPack[] = [
   // TEST: pack a retirer apres validation du paiement live.
-  { id: 'test', label: 'Test', credits: 100, amount: '50', currency: 'XAF' },
+  { id: 'test', label: 'Test', credits: 100, amount: '200', currency: 'XAF' },
   {
     id: 'discovery',
     label: 'Decouverte',

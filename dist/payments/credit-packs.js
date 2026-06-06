@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.findPack = exports.CREDIT_PACKS = void 0;
 exports.CREDIT_PACKS = [
-    { id: 'test', label: 'Test', credits: 100, amount: '50', currency: 'XAF' },
+    { id: 'test', label: 'Test', credits: 100, amount: '200', currency: 'XAF' },
     {
         id: 'discovery',
         label: 'Decouverte',
