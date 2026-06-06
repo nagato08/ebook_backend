@@ -23,13 +23,14 @@ services:
     # Secrets / cles applicatives (Groq, GeniusPay, Resend, Google, JWT...)
     env_file:
       - .env
-    # Overrides specifiques au conteneur (priment sur env_file)
+    # Overrides specifiques au conteneur (priment sur env_file).
+    # NB: FRONTEND_URL vient du .env (ne pas le surcharger ici sinon il
+    # retombe sur localhost si la variable shell n'est pas exportee).
     environment:
       NODE_ENV: production
       PORT: 3001
       DATABASE_URL: postgresql://ebook:${POSTGRES_PASSWORD:-ebookpw}@db:5432/ebook?schema=public
       PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
     ports:
       - "3001:3001"
     volumes:
