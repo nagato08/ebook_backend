@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ebook
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ebookpw}
+      POSTGRES_DB: ebook
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ebook -d ebook"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    # Secrets / cles applicatives (Groq, GeniusPay, Resend, Google, JWT...)
+    env_file:
+      - .env
+    # Overrides specifiques au conteneur (priment sur env_file)
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgresql://ebook:${POSTGRES_PASSWORD:-ebookpw}@db:5432/ebook?schema=public
+      PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+    ports:
+      - "3001:3001"
+    volumes:
+      - uploads:/app/uploads
+
+volumes:
+  pgdata:
+  uploads:
+
+
+

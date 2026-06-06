@@ -1,0 +1,113 @@
+// Ebook generation backend — schema
+// PostgreSQL (production-ready). SQLite dev optionnel.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    String   @id @default(uuid())
+  email                 String   @unique
+  password              String
+  name                  String
+  avatarUrl             String?  // chemin /uploads/avatars/... ; null -> initiales cote front
+  credits               Int      @default(20) // 20 crédits offerts (1 génération gratuite pour tester)
+  emailVerified         Boolean  @default(false)
+  emailVerificationToken String?  @unique
+  createdAt             DateTime @default(now())
+
+  books    Book[]
+  ledger   CreditLedger[]
+  payments Payment[]
+}
+
+model Book {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  topic     String
+  audience  String?
+  tone      String?
+  language  String   @default("fr")
+  style     String   @default("Moderne")
+  // DRAFT | GENERATING | READY | FAILED
+  status    String   @default("DRAFT")
+  // Freemium: a la generation le livre est verrouille (seul le ch.1 est lisible).
+  // Passe a true apres deblocage (20 credits) -> lecture complete + export.
+  unlocked  Boolean  @default(false)
+  coverUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chapters Chapter[]
+
+  @@index([userId])
+}
+
+model Chapter {
+  id      String  @id @default(uuid())
+  bookId  String
+  order   Int
+  title   String
+  content String? // rempli par la génération
+  // PENDING | GENERATING | DONE | FAILED
+  status  String  @default("PENDING")
+
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@unique([bookId, order])
+  @@index([bookId])
+}
+
+model CreditLedger {
+  id           String   @id @default(uuid())
+  userId       String
+  delta        Int // + recharge, - consommation
+  reason       String // "signup_bonus" | "generation" | "purchase:<depositId>"
+  balanceAfter Int
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Cache des analyses de niche (global, TTL applique au niveau service).
+model NicheQuery {
+  id        String   @id @default(uuid())
+  keyword   String
+  geo       String   @default("CM")
+  result    String // JSON serialise de l'analyse
+  source    String // ai-estimate | trends
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([keyword, geo])
+}
+
+model Payment {
+  id            String   @id @default(uuid())
+  userId        String
+  depositId     String   @unique // notre reference unique (external_reference cote CamPay)
+  providerRef   String?  @unique // reference generee par CamPay (sert au polling/statut)
+  amount        String // montant entier en string (XAF sans decimales)
+  currency      String
+  provider      String? // operateur (auto-detecte par CamPay: MTN/ORANGE)
+  phoneNumber   String
+  creditsPack   Int // crédits crédités si succès
+  // PENDING | SUCCESSFUL | FAILED (statuts CamPay)
+  status        String   @default("PENDING")
+  failureReason String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
