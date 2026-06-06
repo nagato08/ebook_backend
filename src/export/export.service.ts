@@ -128,8 +128,9 @@ export class ExportService {
 <meta charset="utf-8" />
 <style>
   @page { margin: 22mm 18mm; }
-  /* Couverture: page dediee sans marge -> fond edge-to-edge. */
-  @page cover { margin: 0; }
+  /* Couverture = 1ere page du document: sans marge -> fond edge-to-edge.
+     (@page :first est supporte par Chromium, contrairement aux named pages.) */
+  @page :first { margin: 0; }
   * { box-sizing: border-box; }
   body {
     font-family: Georgia, 'Times New Roman', serif;
@@ -137,7 +138,6 @@ export class ExportService {
   }
   /* ---- Couverture pleine page A4 (210x297mm, edge-to-edge) ---- */
   .cover {
-    page: cover;
     position: relative; width: 210mm; height: 297mm; overflow: hidden;
     background: linear-gradient(150deg, ${c1} 0%, ${c2} 100%);
     color: ${coverText}; page-break-after: always;
