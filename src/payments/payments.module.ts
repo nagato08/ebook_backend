@@ -29,5 +29,6 @@ import { PAYMENT_PROVIDER } from './payment-provider.interface';
       inject: [CampayService, GeniusPayService, MonetbilService],
     },
   ],
+  exports: [PaymentsService],
 })
 export class PaymentsModule {}

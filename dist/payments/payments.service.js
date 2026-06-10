@@ -223,6 +223,50 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
             credited: fresh?.status === SUCCESS,
         };
     }
+    async createManual(userId, packId, senderPhone, txId) {
+        const pack = (0, credit_packs_1.findPack)(packId);
+        if (!pack)
+            throw new common_1.BadRequestException('Pack inconnu');
+        const phone = senderPhone.replace(/[^0-9]/g, '');
+        const tx = txId.trim();
+        if (phone.length < 8)
+            throw new common_1.BadRequestException('Numero payeur invalide');
+        if (!tx)
+            throw new common_1.BadRequestException('ID de transaction requis');
+        const existing = await this.prisma.payment.findUnique({
+            where: { providerRef: tx },
+        });
+        if (existing) {
+            throw new common_1.BadRequestException('Cet ID de transaction a deja ete soumis');
+        }
+        const depositId = (0, crypto_1.randomUUID)();
+        await this.prisma.payment.create({
+            data: {
+                userId,
+                depositId,
+                amount: pack.amount,
+                currency: pack.currency,
+                phoneNumber: phone,
+                creditsPack: pack.credits,
+                status: 'PENDING',
+                provider: 'manual',
+                providerRef: tx,
+            },
+        });
+        return {
+            depositId,
+            status: 'PENDING',
+            message: 'Paiement soumis. En attente de validation par un administrateur.',
+        };
+    }
+    async adminApprove(paymentId) {
+        await this.applyFinalStatus(paymentId, SUCCESS);
+        return this.prisma.payment.findUnique({ where: { id: paymentId } });
+    }
+    async adminReject(paymentId, reason) {
+        await this.applyFinalStatus(paymentId, FAILED, reason ?? 'Rejete par admin');
+        return this.prisma.payment.findUnique({ where: { id: paymentId } });
+    }
     async applyFinalStatus(paymentId, status, failureReason) {
         const payment = await this.prisma.payment.findUniqueOrThrow({
             where: { id: paymentId },

@@ -47,5 +47,40 @@ export declare class PaymentsService {
         status: string | undefined;
         credited: boolean;
     }>;
+    createManual(userId: string, packId: string, senderPhone: string, txId: string): Promise<{
+        depositId: `${string}-${string}-${string}-${string}-${string}`;
+        status: string;
+        message: string;
+    }>;
+    adminApprove(paymentId: string): Promise<{
+        id: string;
+        depositId: string;
+        providerRef: string | null;
+        userId: string;
+        amount: string;
+        currency: string;
+        provider: string | null;
+        phoneNumber: string;
+        creditsPack: number;
+        status: string;
+        failureReason: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+    } | null>;
+    adminReject(paymentId: string, reason?: string): Promise<{
+        id: string;
+        depositId: string;
+        providerRef: string | null;
+        userId: string;
+        amount: string;
+        currency: string;
+        provider: string | null;
+        phoneNumber: string;
+        creditsPack: number;
+        status: string;
+        failureReason: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+    } | null>;
     private applyFinalStatus;
 }

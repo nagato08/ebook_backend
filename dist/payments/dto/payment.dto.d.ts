@@ -3,3 +3,8 @@ export declare class InitiateDepositDto {
     phoneNumber?: string;
     currency?: string;
 }
+export declare class ManualPaymentDto {
+    packId: string;
+    senderPhone: string;
+    txId: string;
+}

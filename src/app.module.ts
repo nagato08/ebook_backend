@@ -12,6 +12,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { ExportModule } from './export/export.module';
 import { NicheModule } from './niche/niche.module';
 import { SettingsModule } from './settings/settings.module';
+import { AdminModule } from './admin/admin.module';
 import { MaintenanceGuard } from './common/guards/maintenance.guard';
 
 @Module({
@@ -30,6 +31,7 @@ import { MaintenanceGuard } from './common/guards/maintenance.guard';
     ExportModule,
     NicheModule,
     SettingsModule,
+    AdminModule,
   ],
   providers: [
     // Guard global: applique le mode maintenance a toutes les routes.

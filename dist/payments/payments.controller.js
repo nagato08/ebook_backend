@@ -32,6 +32,9 @@ let PaymentsController = class PaymentsController {
     deposit(user, dto) {
         return this.payments.initiate(user.id, dto);
     }
+    manual(user, dto) {
+        return this.payments.createManual(user.id, dto.packId, dto.senderPhone, dto.txId);
+    }
     callback(req, body, signature, timestamp) {
         return this.payments.handleWebhook(body, {
             rawBody: req.rawBody?.toString('utf8'),
@@ -65,6 +68,15 @@ __decorate([
     __metadata("design:paramtypes", [Object, payment_dto_1.InitiateDepositDto]),
     __metadata("design:returntype", void 0)
 ], PaymentsController.prototype, "deposit", null);
+__decorate([
+    (0, common_1.Post)('manual'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, payment_dto_1.ManualPaymentDto]),
+    __metadata("design:returntype", void 0)
+], PaymentsController.prototype, "manual", null);
 __decorate([
     (0, common_1.Post)('callback'),
     __param(0, (0, common_1.Req)()),

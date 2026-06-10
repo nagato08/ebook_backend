@@ -14,7 +14,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { AuthUser } from '../auth/current-user.decorator';
 import { PaymentsService } from './payments.service';
-import { InitiateDepositDto } from './dto/payment.dto';
+import { InitiateDepositDto, ManualPaymentDto } from './dto/payment.dto';
 
 @Controller('payments')
 export class PaymentsController {
@@ -35,6 +35,18 @@ export class PaymentsController {
   @UseGuards(JwtAuthGuard)
   deposit(@CurrentUser() user: AuthUser, @Body() dto: InitiateDepositDto) {
     return this.payments.initiate(user.id, dto);
+  }
+
+  // Paiement manuel: l'user a payé sur le MoMo de l'admin et soumet sa preuve.
+  @Post('manual')
+  @UseGuards(JwtAuthGuard)
+  manual(@CurrentUser() user: AuthUser, @Body() dto: ManualPaymentDto) {
+    return this.payments.createManual(
+      user.id,
+      dto.packId,
+      dto.senderPhone,
+      dto.txId,
+    );
   }
 
   // Callback public du provider actif. Le dispatcher verifie la signature

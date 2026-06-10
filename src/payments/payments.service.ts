@@ -315,6 +315,72 @@ export class PaymentsService {
     };
   }
 
+  /**
+   * Paiement MANUEL : l'utilisateur a payé sur le MoMo de l'admin (hors
+   * agrégateur) et soumet sa preuve (numéro payeur + ID de transaction).
+   * Crée un Payment PENDING -> l'admin valide ensuite dans le panel.
+   */
+  async createManual(
+    userId: string,
+    packId: string,
+    senderPhone: string,
+    txId: string,
+  ) {
+    const pack = findPack(packId);
+    if (!pack) throw new BadRequestException('Pack inconnu');
+
+    const phone = senderPhone.replace(/[^0-9]/g, '');
+    const tx = txId.trim();
+    if (phone.length < 8)
+      throw new BadRequestException('Numero payeur invalide');
+    if (!tx) throw new BadRequestException('ID de transaction requis');
+
+    const existing = await this.prisma.payment.findUnique({
+      where: { providerRef: tx },
+    });
+    if (existing) {
+      throw new BadRequestException('Cet ID de transaction a deja ete soumis');
+    }
+
+    const depositId = randomUUID();
+    await this.prisma.payment.create({
+      data: {
+        userId,
+        depositId,
+        amount: pack.amount,
+        currency: pack.currency,
+        phoneNumber: phone,
+        creditsPack: pack.credits,
+        status: 'PENDING',
+        provider: 'manual',
+        providerRef: tx,
+      },
+    });
+
+    return {
+      depositId,
+      status: 'PENDING',
+      message:
+        'Paiement soumis. En attente de validation par un administrateur.',
+    };
+  }
+
+  /** Admin: valide un paiement (typiquement manuel) -> credite (idempotent). */
+  async adminApprove(paymentId: string) {
+    await this.applyFinalStatus(paymentId, SUCCESS);
+    return this.prisma.payment.findUnique({ where: { id: paymentId } });
+  }
+
+  /** Admin: rejette un paiement. */
+  async adminReject(paymentId: string, reason?: string) {
+    await this.applyFinalStatus(
+      paymentId,
+      FAILED,
+      reason ?? 'Rejete par admin',
+    );
+    return this.prisma.payment.findUnique({ where: { id: paymentId } });
+  }
+
   /** Transition vers statut final + credit unique. */
   private async applyFinalStatus(
     paymentId: string,

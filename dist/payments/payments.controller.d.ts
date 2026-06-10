@@ -2,7 +2,7 @@ import type { RawBodyRequest } from '@nestjs/common';
 import type { Request } from 'express';
 import type { AuthUser } from '../auth/current-user.decorator';
 import { PaymentsService } from './payments.service';
-import { InitiateDepositDto } from './dto/payment.dto';
+import { InitiateDepositDto, ManualPaymentDto } from './dto/payment.dto';
 export declare class PaymentsController {
     private payments;
     constructor(payments: PaymentsService);
@@ -24,6 +24,11 @@ export declare class PaymentsController {
             amount: string;
             currency: string;
         };
+        message: string;
+    }>;
+    manual(user: AuthUser, dto: ManualPaymentDto): Promise<{
+        depositId: `${string}-${string}-${string}-${string}-${string}`;
+        status: string;
         message: string;
     }>;
     callback(req: RawBodyRequest<Request>, body: Record<string, unknown>, signature?: string, timestamp?: string): Promise<string | {

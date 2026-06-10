@@ -38,6 +38,7 @@ exports.PaymentsModule = PaymentsModule = __decorate([
                 inject: [campay_service_1.CampayService, geniuspay_service_1.GeniusPayService, monetbil_service_1.MonetbilService],
             },
         ],
+        exports: [payments_service_1.PaymentsService],
     })
 ], PaymentsModule);
 //# sourceMappingURL=payments.module.js.map

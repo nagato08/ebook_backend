@@ -21,6 +21,7 @@ const payments_module_1 = require("./payments/payments.module");
 const export_module_1 = require("./export/export.module");
 const niche_module_1 = require("./niche/niche.module");
 const settings_module_1 = require("./settings/settings.module");
+const admin_module_1 = require("./admin/admin.module");
 const maintenance_guard_1 = require("./common/guards/maintenance.guard");
 let AppModule = class AppModule {
 };
@@ -42,6 +43,7 @@ exports.AppModule = AppModule = __decorate([
             export_module_1.ExportModule,
             niche_module_1.NicheModule,
             settings_module_1.SettingsModule,
+            admin_module_1.AdminModule,
         ],
         providers: [
             { provide: core_1.APP_GUARD, useClass: maintenance_guard_1.MaintenanceGuard },

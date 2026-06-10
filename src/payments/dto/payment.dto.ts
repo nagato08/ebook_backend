@@ -14,3 +14,14 @@ export class InitiateDepositDto {
   @IsString()
   currency?: string; // surcharge devise du pack si besoin (defaut XAF)
 }
+
+export class ManualPaymentDto {
+  @IsString()
+  packId: string;
+
+  @IsString()
+  senderPhone: string; // numero MoMo qui a effectue le paiement
+
+  @IsString()
+  txId: string; // ID de transaction MoMo (preuve)
+}
