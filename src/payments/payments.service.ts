@@ -6,7 +6,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { createHmac, randomUUID, timingSafeEqual } from 'crypto';
+import { createHash, createHmac, randomUUID, timingSafeEqual } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreditsService } from '../credits/credits.service';
 import { PAYMENT_PROVIDER } from './payment-provider.interface';
@@ -20,6 +20,9 @@ import { CAMPAY_OPERATORS } from './payment-providers';
 
 const SUCCESS = 'SUCCESSFUL';
 const FAILED = 'FAILED';
+
+/** Coerce une valeur de param form-encoded (toujours string) en string sure. */
+const mbStr = (v: unknown): string => (typeof v === 'string' ? v : '');
 
 @Injectable()
 export class PaymentsService {
@@ -115,6 +118,23 @@ export class PaymentsService {
   }
 
   /**
+   * Point d'entree unique du webhook /payments/callback.
+   * Dispatch selon le provider actif (formats/signatures differents):
+   *  - monetbil: form-encoded + signature MD5 -> repond le texte "received"
+   *  - geniuspay/campay: JSON + HMAC-SHA256 -> repond { ok: true }
+   */
+  async handleWebhook(
+    body: Record<string, unknown>,
+    opts: { rawBody?: string; signature?: string; timestamp?: string },
+  ): Promise<{ ok: boolean } | string> {
+    if (this.provider.name === 'monetbil') {
+      return this.handleMonetbilCallback(body);
+    }
+    this.verifyWebhook(opts.signature, opts.timestamp, opts.rawBody);
+    return this.handleCallback(body);
+  }
+
+  /**
    * Verifie la signature HMAC d'un webhook GeniusPay AVANT traitement.
    * Formule: HMAC-SHA256(`${timestamp}.${rawBody}`, whsec) compare a X-Webhook-Signature.
    * Si GENIUSPAY_WEBHOOK_SECRET absent (sandbox) -> on saute la verif (warn).
@@ -179,6 +199,79 @@ export class PaymentsService {
       data.reason as string | undefined,
     );
     return { ok: true };
+  }
+
+  /**
+   * Notification Monetbil (Widget v2.1). Params form-encoded incluant `sign`.
+   * Securite: signature MD5 verifiee AVANT credit. Repond "received" (attendu
+   * par Monetbil). Idempotent (applyFinalStatus credite une seule fois).
+   * Statuts: success -> SUCCESSFUL ; cancelled/failed -> FAILED.
+   */
+  async handleMonetbilCallback(
+    params: Record<string, unknown>,
+  ): Promise<string> {
+    this.verifyMonetbilNotification(params);
+
+    const depositId = params.payment_ref as string | undefined;
+    if (!depositId) throw new BadRequestException('payment_ref manquant');
+
+    const status = mbStr(params.status).toLowerCase();
+    const payment = await this.prisma.payment.findFirst({
+      where: { depositId },
+    });
+    if (!payment) {
+      this.logger.warn(`Callback Monetbil ref inconnue: ${depositId}`);
+      return 'received';
+    }
+
+    const normalized =
+      status === 'success'
+        ? SUCCESS
+        : status === 'failed' || status === 'cancelled'
+          ? FAILED
+          : 'PENDING';
+
+    await this.applyFinalStatus(
+      payment.id,
+      normalized,
+      params.message as string | undefined,
+    );
+    return 'received';
+  }
+
+  /**
+   * Verifie la signature MD5 d'une notification Monetbil AVANT traitement.
+   * Formule officielle: sign = md5(service_secret + valeurs des params tries
+   * par cle, hors `sign`, concatenees sans separateur).
+   * Si MONETBIL_SERVICE_SECRET absent (mock) -> on saute la verif (warn).
+   * Leve UnauthorizedException si la signature est invalide.
+   */
+  private verifyMonetbilNotification(params: Record<string, unknown>): void {
+    const secret = process.env.MONETBIL_SERVICE_SECRET;
+    if (!secret) {
+      this.logger.warn(
+        'Webhook Monetbil non verifie (MONETBIL_SERVICE_SECRET absent)',
+      );
+      return;
+    }
+
+    const sign = params.sign as string | undefined;
+    if (!sign) throw new UnauthorizedException('Signature Monetbil manquante');
+
+    // Concatene les valeurs des params (hors `sign`) tries par cle.
+    const keys = Object.keys(params)
+      .filter((k) => k !== 'sign')
+      .sort();
+    const concat = keys.map((k) => mbStr(params[k])).join('');
+    const expected = createHash('md5')
+      .update(secret + concat)
+      .digest('hex');
+
+    const a = Buffer.from(sign);
+    const b = Buffer.from(expected);
+    if (a.length !== b.length || !timingSafeEqual(a, b)) {
+      throw new UnauthorizedException('Signature Monetbil invalide');
+    }
   }
 
   /** Mappe les statuts/events des providers vers SUCCESSFUL | FAILED | PENDING. */

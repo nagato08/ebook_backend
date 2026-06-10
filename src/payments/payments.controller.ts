@@ -37,7 +37,8 @@ export class PaymentsController {
     return this.payments.initiate(user.id, dto);
   }
 
-  // Callback public du provider (GeniusPay). Signature verifiee avant traitement.
+  // Callback public du provider actif. Le dispatcher verifie la signature
+  // (HMAC GeniusPay/CamPay ou MD5 Monetbil) AVANT de crediter.
   @Post('callback')
   callback(
     @Req() req: RawBodyRequest<Request>,
@@ -45,12 +46,11 @@ export class PaymentsController {
     @Headers('x-webhook-signature') signature?: string,
     @Headers('x-webhook-timestamp') timestamp?: string,
   ) {
-    this.payments.verifyWebhook(
+    return this.payments.handleWebhook(body, {
+      rawBody: req.rawBody?.toString('utf8'),
       signature,
       timestamp,
-      req.rawBody?.toString('utf8'),
-    );
-    return this.payments.handleCallback(body);
+    });
   }
 
   @Get('deposit/:depositId/status')

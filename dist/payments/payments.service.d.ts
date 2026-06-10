@@ -8,16 +8,44 @@ export declare class PaymentsService {
     private provider;
     private readonly logger;
     constructor(prisma: PrismaService, credits: CreditsService, provider: PaymentProvider);
-    packs(): {};
+    packs(): import("./credit-packs").CreditPack[];
     providers(): {
         provider: string;
         source: "mock" | "live";
-        providers: {};
+        providers: import("./payment-providers").PaymentOperator[];
     };
-    initiate(userId: string, dto: InitiateDepositDto): unknown;
+    initiate(userId: string, dto: InitiateDepositDto): Promise<{
+        depositId: `${string}-${string}-${string}-${string}-${string}`;
+        status: string;
+        checkoutUrl: string | undefined;
+        ussdCode: string | undefined;
+        operator: string | undefined;
+        pack: {
+            id: string;
+            credits: number;
+            amount: string;
+            currency: string;
+        };
+        message: string;
+    }>;
+    handleWebhook(body: Record<string, unknown>, opts: {
+        rawBody?: string;
+        signature?: string;
+        timestamp?: string;
+    }): Promise<{
+        ok: boolean;
+    } | string>;
     verifyWebhook(signature?: string, timestamp?: string, rawBody?: string): void;
-    handleCallback(body: Record<string, unknown>): unknown;
+    handleCallback(body: Record<string, unknown>): Promise<{
+        ok: boolean;
+    }>;
+    handleMonetbilCallback(params: Record<string, unknown>): Promise<string>;
+    private verifyMonetbilNotification;
     private normalizeStatus;
-    checkAndSync(userId: string, depositId: string): unknown;
+    checkAndSync(userId: string, depositId: string): Promise<{
+        depositId: string;
+        status: string | undefined;
+        credited: boolean;
+    }>;
     private applyFinalStatus;
 }

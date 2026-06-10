@@ -3,9 +3,17 @@ export declare class CreditsService {
     private prisma;
     constructor(prisma: PrismaService);
     balance(userId: string): Promise<number>;
-    ledger(userId: string): unknown;
+    ledger(userId: string): Promise<{
+        label: string;
+        id: string;
+        createdAt: Date;
+        delta: number;
+        reason: string;
+        balanceAfter: number;
+        userId: string;
+    }[]>;
     private label;
-    debit(userId: string, amount: number, reason: string): unknown;
-    credit(userId: string, amount: number, reason: string): unknown;
+    debit(userId: string, amount: number, reason: string): Promise<number>;
+    credit(userId: string, amount: number, reason: string): Promise<number>;
     private applyDelta;
 }

@@ -12,6 +12,7 @@ const payments_service_1 = require("./payments.service");
 const payments_controller_1 = require("./payments.controller");
 const campay_service_1 = require("./campay.service");
 const geniuspay_service_1 = require("./geniuspay.service");
+const monetbil_service_1 = require("./monetbil.service");
 const payment_provider_interface_1 = require("./payment-provider.interface");
 let PaymentsModule = class PaymentsModule {
 };
@@ -23,10 +24,18 @@ exports.PaymentsModule = PaymentsModule = __decorate([
             payments_service_1.PaymentsService,
             campay_service_1.CampayService,
             geniuspay_service_1.GeniusPayService,
+            monetbil_service_1.MonetbilService,
             {
                 provide: payment_provider_interface_1.PAYMENT_PROVIDER,
-                useFactory: (campay, genius) => process.env.PAYMENT_PROVIDER === 'campay' ? campay : genius,
-                inject: [campay_service_1.CampayService, geniuspay_service_1.GeniusPayService],
+                useFactory: (campay, genius, monetbil) => {
+                    const p = process.env.PAYMENT_PROVIDER;
+                    if (p === 'campay')
+                        return campay;
+                    if (p === 'monetbil')
+                        return monetbil;
+                    return genius;
+                },
+                inject: [campay_service_1.CampayService, geniuspay_service_1.GeniusPayService, monetbil_service_1.MonetbilService],
             },
         ],
     })

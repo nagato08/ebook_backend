@@ -6,4 +6,4 @@ export interface AuthUser {
     emailVerified: boolean;
     avatarUrl: string | null;
 }
-export declare const CurrentUser: any;
+export declare const CurrentUser: (...dataOrPipes: unknown[]) => ParameterDecorator;

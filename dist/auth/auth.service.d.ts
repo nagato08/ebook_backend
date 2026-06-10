@@ -7,13 +7,37 @@ export declare class AuthService {
     private jwt;
     private email;
     constructor(prisma: PrismaService, jwt: JwtService, email: EmailService);
-    register(dto: RegisterDto): unknown;
-    login(dto: LoginDto): unknown;
+    register(dto: RegisterDto): Promise<{
+        token: string;
+        user: {
+            id: string;
+            email: string;
+            name: string | null;
+            credits: number;
+        };
+    }>;
+    login(dto: LoginDto): Promise<{
+        token: string;
+        user: {
+            id: string;
+            email: string;
+            name: string | null;
+            credits: number;
+        };
+    }>;
     googleLogin(profile: {
         googleId: string;
         email: string;
         name: string;
-    }): unknown;
+    }): Promise<{
+        token: string;
+        user: {
+            id: string;
+            email: string;
+            name: string | null;
+            credits: number;
+        };
+    }>;
     sendVerificationEmail(email: string): Promise<{
         message: string;
         token?: string;

@@ -11,7 +11,6 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PaymentsController = void 0;
 const common_1 = require("@nestjs/common");
@@ -34,8 +33,11 @@ let PaymentsController = class PaymentsController {
         return this.payments.initiate(user.id, dto);
     }
     callback(req, body, signature, timestamp) {
-        this.payments.verifyWebhook(signature, timestamp, req.rawBody?.toString('utf8'));
-        return this.payments.handleCallback(body);
+        return this.payments.handleWebhook(body, {
+            rawBody: req.rawBody?.toString('utf8'),
+            signature,
+            timestamp,
+        });
     }
     status(user, depositId) {
         return this.payments.checkAndSync(user.id, depositId);
@@ -70,7 +72,7 @@ __decorate([
     __param(2, (0, common_1.Headers)('x-webhook-signature')),
     __param(3, (0, common_1.Headers)('x-webhook-timestamp')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, typeof (_a = typeof Record !== "undefined" && Record) === "function" ? _a : Object, String, String]),
+    __metadata("design:paramtypes", [Object, Object, String, String]),
     __metadata("design:returntype", void 0)
 ], PaymentsController.prototype, "callback", null);
 __decorate([

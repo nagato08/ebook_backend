@@ -23,6 +23,7 @@ const credit_packs_1 = require("./credit-packs");
 const payment_providers_1 = require("./payment-providers");
 const SUCCESS = 'SUCCESSFUL';
 const FAILED = 'FAILED';
+const mbStr = (v) => (typeof v === 'string' ? v : '');
 let PaymentsService = PaymentsService_1 = class PaymentsService {
     prisma;
     credits;
@@ -103,6 +104,13 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
             message,
         };
     }
+    async handleWebhook(body, opts) {
+        if (this.provider.name === 'monetbil') {
+            return this.handleMonetbilCallback(body);
+        }
+        this.verifyWebhook(opts.signature, opts.timestamp, opts.rawBody);
+        return this.handleCallback(body);
+    }
     verifyWebhook(signature, timestamp, rawBody) {
         const secret = process.env.GENIUSPAY_WEBHOOK_SECRET;
         if (!secret) {
@@ -141,6 +149,49 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
         }
         await this.applyFinalStatus(payment.id, this.normalizeStatus(rawStatus), data.reason);
         return { ok: true };
+    }
+    async handleMonetbilCallback(params) {
+        this.verifyMonetbilNotification(params);
+        const depositId = params.payment_ref;
+        if (!depositId)
+            throw new common_1.BadRequestException('payment_ref manquant');
+        const status = mbStr(params.status).toLowerCase();
+        const payment = await this.prisma.payment.findFirst({
+            where: { depositId },
+        });
+        if (!payment) {
+            this.logger.warn(`Callback Monetbil ref inconnue: ${depositId}`);
+            return 'received';
+        }
+        const normalized = status === 'success'
+            ? SUCCESS
+            : status === 'failed' || status === 'cancelled'
+                ? FAILED
+                : 'PENDING';
+        await this.applyFinalStatus(payment.id, normalized, params.message);
+        return 'received';
+    }
+    verifyMonetbilNotification(params) {
+        const secret = process.env.MONETBIL_SERVICE_SECRET;
+        if (!secret) {
+            this.logger.warn('Webhook Monetbil non verifie (MONETBIL_SERVICE_SECRET absent)');
+            return;
+        }
+        const sign = params.sign;
+        if (!sign)
+            throw new common_1.UnauthorizedException('Signature Monetbil manquante');
+        const keys = Object.keys(params)
+            .filter((k) => k !== 'sign')
+            .sort();
+        const concat = keys.map((k) => mbStr(params[k])).join('');
+        const expected = (0, crypto_1.createHash)('md5')
+            .update(secret + concat)
+            .digest('hex');
+        const a = Buffer.from(sign);
+        const b = Buffer.from(expected);
+        if (a.length !== b.length || !(0, crypto_1.timingSafeEqual)(a, b)) {
+            throw new common_1.UnauthorizedException('Signature Monetbil invalide');
+        }
     }
     normalizeStatus(s) {
         const v = s.toLowerCase();

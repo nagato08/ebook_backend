@@ -9,10 +9,23 @@ export declare class GenerationService {
     private readonly logger;
     private readonly unlockCost;
     constructor(prisma: PrismaService, credits: CreditsService, books: BooksService);
-    start(userId: string, bookId: string, dto: GenerateBookDto): unknown;
-    unlock(userId: string, bookId: string): unknown;
+    start(userId: string, bookId: string, dto: GenerateBookDto): Promise<{
+        bookId: string;
+        status: string;
+    }>;
+    unlock(userId: string, bookId: string): Promise<{
+        bookId: string;
+        unlocked: boolean;
+        creditsSpent: number;
+    }>;
     private wordsPerChapter;
-    status(userId: string, bookId: string): unknown;
+    status(userId: string, bookId: string): Promise<{
+        status: string;
+        progress: number;
+        chapters: number;
+        coverUrl: string | null;
+        unlocked: boolean;
+    }>;
     private run;
     private callGenerator;
     private mock;
