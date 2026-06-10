@@ -111,3 +111,10 @@ model Payment {
 
   @@index([userId])
 }
+
+// Réglages globaux clé/valeur (ex: maintenance = "on"|"off"). Togglable à chaud.
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
