@@ -34,7 +34,7 @@ let SettingsController = class SettingsController {
         };
     }
     async toggle(user, dto) {
-        if (user.email !== process.env.ADMIN_EMAIL) {
+        if (!(0, is_admin_1.isAdminEmail)(user.email)) {
             throw new common_1.ForbiddenException("Reserve a l'administrateur");
         }
         await this.settings.setMaintenance(dto.on);
