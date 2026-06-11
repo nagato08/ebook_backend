@@ -29,6 +29,9 @@ let PaymentsController = class PaymentsController {
     providers() {
         return this.payments.providers();
     }
+    manualInfo() {
+        return this.payments.manualInfo();
+    }
     deposit(user, dto) {
         return this.payments.initiate(user.id, dto);
     }
@@ -59,6 +62,12 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], PaymentsController.prototype, "providers", null);
+__decorate([
+    (0, common_1.Get)('manual-info'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], PaymentsController.prototype, "manualInfo", null);
 __decorate([
     (0, common_1.Post)('deposit'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),

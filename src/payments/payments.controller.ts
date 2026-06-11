@@ -31,6 +31,12 @@ export class PaymentsController {
     return this.payments.providers();
   }
 
+  // Infos paiement manuel (numero MoMo de l'admin a afficher a l'utilisateur).
+  @Get('manual-info')
+  manualInfo() {
+    return this.payments.manualInfo();
+  }
+
   @Post('deposit')
   @UseGuards(JwtAuthGuard)
   deposit(@CurrentUser() user: AuthUser, @Body() dto: InitiateDepositDto) {

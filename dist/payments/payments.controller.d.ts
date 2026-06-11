@@ -12,6 +12,12 @@ export declare class PaymentsController {
         source: "mock" | "live";
         providers: import("./payment-providers").PaymentOperator[];
     };
+    manualInfo(): {
+        enabled: boolean;
+        number: string;
+        name: string;
+        operators: import("./payment-providers").PaymentOperator[];
+    };
     deposit(user: AuthUser, dto: InitiateDepositDto): Promise<{
         depositId: `${string}-${string}-${string}-${string}-${string}`;
         status: string;

@@ -9,6 +9,12 @@ export declare class PaymentsService {
     private readonly logger;
     constructor(prisma: PrismaService, credits: CreditsService, provider: PaymentProvider);
     packs(): import("./credit-packs").CreditPack[];
+    manualInfo(): {
+        enabled: boolean;
+        number: string;
+        name: string;
+        operators: import("./payment-providers").PaymentOperator[];
+    };
     providers(): {
         provider: string;
         source: "mock" | "live";
@@ -54,33 +60,33 @@ export declare class PaymentsService {
     }>;
     adminApprove(paymentId: string): Promise<{
         id: string;
+        createdAt: Date;
+        userId: string;
+        status: string;
+        updatedAt: Date;
+        phoneNumber: string;
+        currency: string;
         depositId: string;
         providerRef: string | null;
-        userId: string;
         amount: string;
-        currency: string;
         provider: string | null;
-        phoneNumber: string;
         creditsPack: number;
-        status: string;
         failureReason: string | null;
-        createdAt: Date;
-        updatedAt: Date;
     } | null>;
     adminReject(paymentId: string, reason?: string): Promise<{
         id: string;
+        createdAt: Date;
+        userId: string;
+        status: string;
+        updatedAt: Date;
+        phoneNumber: string;
+        currency: string;
         depositId: string;
         providerRef: string | null;
-        userId: string;
         amount: string;
-        currency: string;
         provider: string | null;
-        phoneNumber: string;
         creditsPack: number;
-        status: string;
         failureReason: string | null;
-        createdAt: Date;
-        updatedAt: Date;
     } | null>;
     private applyFinalStatus;
 }

@@ -24,12 +24,12 @@ export declare class AdminService {
         skip: number;
         take: number;
         items: {
-            id: string;
-            createdAt: Date;
-            name: string;
             email: string;
+            name: string;
+            id: string;
             credits: number;
             emailVerified: boolean;
+            createdAt: Date;
             _count: {
                 books: number;
                 payments: number;
@@ -38,37 +38,37 @@ export declare class AdminService {
     }>;
     user(id: string): Promise<{
         user: {
-            id: string;
-            createdAt: Date;
-            name: string;
             email: string;
+            name: string;
+            id: string;
             avatarUrl: string | null;
             credits: number;
             emailVerified: boolean;
+            createdAt: Date;
         };
         books: {
             id: string;
-            status: string;
             createdAt: Date;
             title: string;
+            status: string;
             unlocked: boolean;
         }[];
         payments: {
             id: string;
+            createdAt: Date;
+            status: string;
+            phoneNumber: string;
+            currency: string;
             providerRef: string | null;
             amount: string;
-            currency: string;
             provider: string | null;
-            phoneNumber: string;
             creditsPack: number;
-            status: string;
-            createdAt: Date;
         }[];
         ledger: {
             id: string;
             createdAt: Date;
-            reason: string;
             delta: number;
+            reason: string;
             balanceAfter: number;
         }[];
     }>;
@@ -77,50 +77,50 @@ export declare class AdminService {
         provider?: string;
         take?: number;
     }): Promise<{
+        user: {
+            email: string;
+            name: string;
+            id: string;
+        };
         id: string;
+        createdAt: Date;
+        status: string;
+        phoneNumber: string;
+        currency: string;
         providerRef: string | null;
         amount: string;
-        currency: string;
         provider: string | null;
-        phoneNumber: string;
         creditsPack: number;
-        status: string;
         failureReason: string | null;
-        createdAt: Date;
-        user: {
-            id: string;
-            name: string;
-            email: string;
-        };
     }[]>;
     approve(paymentId: string): Promise<{
         id: string;
+        createdAt: Date;
+        userId: string;
+        status: string;
+        updatedAt: Date;
+        phoneNumber: string;
+        currency: string;
         depositId: string;
         providerRef: string | null;
-        userId: string;
         amount: string;
-        currency: string;
         provider: string | null;
-        phoneNumber: string;
         creditsPack: number;
-        status: string;
         failureReason: string | null;
-        createdAt: Date;
-        updatedAt: Date;
     } | null>;
     reject(paymentId: string, reason?: string): Promise<{
         id: string;
+        createdAt: Date;
+        userId: string;
+        status: string;
+        updatedAt: Date;
+        phoneNumber: string;
+        currency: string;
         depositId: string;
         providerRef: string | null;
-        userId: string;
         amount: string;
-        currency: string;
         provider: string | null;
-        phoneNumber: string;
         creditsPack: number;
-        status: string;
         failureReason: string | null;
-        createdAt: Date;
-        updatedAt: Date;
     } | null>;
 }

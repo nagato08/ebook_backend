@@ -38,6 +38,20 @@ export class PaymentsService {
     return CREDIT_PACKS;
   }
 
+  /**
+   * Infos pour le paiement manuel (MoMo direct sur le numero de l'admin).
+   * `enabled` false si ADMIN_MOMO_NUMBER absent -> le front masque l'option.
+   */
+  manualInfo() {
+    const number = process.env.ADMIN_MOMO_NUMBER ?? '';
+    return {
+      enabled: !!number,
+      number,
+      name: process.env.ADMIN_MOMO_NAME ?? '',
+      operators: CAMPAY_OPERATORS,
+    };
+  }
+
   /** Operateurs Mobile Money disponibles + provider actif. */
   providers() {
     return {

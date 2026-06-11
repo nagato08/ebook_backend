@@ -37,6 +37,15 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
     packs() {
         return credit_packs_1.CREDIT_PACKS;
     }
+    manualInfo() {
+        const number = process.env.ADMIN_MOMO_NUMBER ?? '';
+        return {
+            enabled: !!number,
+            number,
+            name: process.env.ADMIN_MOMO_NAME ?? '',
+            operators: payment_providers_1.CAMPAY_OPERATORS,
+        };
+    }
     providers() {
         return {
             provider: this.provider.name,
