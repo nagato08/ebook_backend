@@ -16,7 +16,7 @@ model User {
   password              String
   name                  String
   avatarUrl             String?  // chemin /uploads/avatars/... ; null -> initiales cote front
-  credits               Int      @default(20) // 20 crédits offerts (1 génération gratuite pour tester)
+  credits               Int      @default(10) // 10 crédits offerts (1 génération gratuite pour tester)
   emailVerified         Boolean  @default(false)
   emailVerificationToken String?  @unique
   createdAt             DateTime @default(now())
