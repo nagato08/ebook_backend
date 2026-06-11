@@ -8,11 +8,11 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AdminGuard = void 0;
 const common_1 = require("@nestjs/common");
+const is_admin_1 = require("../common/is-admin");
 let AdminGuard = class AdminGuard {
     canActivate(ctx) {
         const req = ctx.switchToHttp().getRequest();
-        const adminEmail = process.env.ADMIN_EMAIL;
-        if (!adminEmail || req.user?.email !== adminEmail) {
+        if (!(0, is_admin_1.isAdminEmail)(req.user?.email)) {
             throw new common_1.ForbiddenException("Reserve a l'administrateur");
         }
         return true;
